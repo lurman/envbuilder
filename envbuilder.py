@@ -65,9 +65,9 @@ class EnvironmentBuilder(object):
             repo, user = args
         if not os.path.exists(self.path_to_workspace + os.sep + repo):
             if password is not None:
-                clone_cmd ='cd {0};git clone https://{1}:\'{2}\'@source.devsnc.com/{3}'.format(self.path_to_workspace,user,password,repo)
+                clone_cmd ='cd {0};git clone https://{1}:\'{2}\'@code.devsnc.com/dev/{3}'.format(self.path_to_workspace,user,password,repo)
             else:
-                clone_cmd ='cd {0};git clone https://{1}@source.devsnc.com/{2}'.format(self.path_to_workspace,user,repo)
+                clone_cmd ='cd {0};git clone https://{1}@code.devsnc.com/dev/{2}'.format(self.path_to_workspace,user,repo)
             self.handle_command(clone_cmd)
 
     def switch_track(self, track_name):
