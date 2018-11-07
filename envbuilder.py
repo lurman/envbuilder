@@ -30,9 +30,10 @@ class EnvironmentBuilder(object):
     def __init__(self, release_name):
         self.release = release_name
         self.config = SncConfig()
-        self.base_dir = self.config.getstring('git_repo','base_dir');
+        self.git_url = self.config.getstring('git_repo', 'git_url')
+        self.base_dir = self.config.getstring('git_repo', 'base_dir');
         self.path_to_workspace = self.base_dir + os.sep + release_name
-        self.eclipse = self.config.getstring('envbuilder','eclipse');
+        self.eclipse = self.config.getstring('envbuilder', 'eclipse');
         self.abort_on_error = self.config.getboolean('envbuilder', 'abort_on_error')
         self.parallel_run = self.config.getboolean('envbuilder', 'parallel_run')
         self.print_cmd_output = self.config.getboolean('envbuilder', 'print_cmd_output')
@@ -41,6 +42,7 @@ class EnvironmentBuilder(object):
         self.instance_user = self.config.getstring('mid', 'instance_user')
         self.instance_password = self.config.getstring('mid', 'instance_password')
         self.repo_status = {}
+        self.errors = []
 
     def clone_env(self, user, password):
         now = time.time()
@@ -65,10 +67,19 @@ class EnvironmentBuilder(object):
             repo, user = args
         if not os.path.exists(self.path_to_workspace + os.sep + repo):
             if password is not None:
-                clone_cmd ='cd {0};git clone https://{1}:\'{2}\'@code.devsnc.com/dev/{3}'.format(self.path_to_workspace,user,password,repo)
+                clone_cmd ='cd {0};git clone https://{1}:\'{2}\'@' + self.git_url + '/{3}'.format(self.path_to_workspace,user,password,repo)
             else:
-                clone_cmd ='cd {0};git clone https://{1}@code.devsnc.com/dev/{2}'.format(self.path_to_workspace,user,repo)
+                clone_cmd ='cd {0};git clone https://{1}@' + self.git_url + '/{2}'.format(self.path_to_workspace,user,repo)
             self.handle_command(clone_cmd)
+
+    def copy_local_env(self, new_release_name):
+        path_to_new_release = self.base_dir + os.sep + new_release_name
+        copy_cmdb = 'cp -rp ' + self.path_to_workspace + ' ' + path_to_new_release
+        ColorPrint.blue_highlight("Copying environment [{0}] to [{1}] ".format(self.release, new_release_name))
+        if os.path.exists(self.path_to_workspace):
+            self.handle_command(copy_cmdb)
+        else:
+            ColorPrint.err("Can't copy due to invalid path: [{0}] ".format(self.path_to_workspace))
 
     def switch_track(self, track_name):
         now = time.time()
@@ -116,12 +127,12 @@ class EnvironmentBuilder(object):
 
     def open_ide(self):
         java_env = 'source ~/.bash_profile'
-        cmd = java_env + ';{0} -nosplash -data "{1}"'.format(self.eclipse,self.path_to_workspace)
+        cmd = java_env + ';{0} -nosplash -data "{1}"'.format(self.eclipse, self.path_to_workspace)
         self.handle_command(cmd)
 
     def run_git_pull(self):
         now = time.time()
-        list_of_repos = self.config.getlist('git_repo','repo');
+        list_of_repos = self.config.getlist('git_repo', 'repo');
         if(self.parallel_run):
             pool = Pool(len(list_of_repos))
             pool.map(self._git_pull, list_of_repos)
@@ -130,7 +141,7 @@ class EnvironmentBuilder(object):
                 self._git_pull(repo)
         later = time.time()
         difference = int(later - now)
-        ColorPrint.blue_highlight("Pull operation for release [{0}] took [{1}] seconds".format(self.release,difference))
+        ColorPrint.blue_highlight("Pull operation for release [{0}] took [{1}] seconds".format(self.release, difference))
 
     def _git_pull(self, repo):
         ColorPrint.blue_highlight("Pulling the repository [{0}]".format(repo))
@@ -200,12 +211,24 @@ class EnvironmentBuilder(object):
         for dir in os.listdir(base_dir):
             if os.path.isdir(base_dir + os.sep + dir) and not dir.startswith('.'):
                 if EnvironmentBuilder.is_release_direcrory(dir):
-                    ColorPrint.info('[' + dir + ']')
+                    ColorPrint.blue_highlight('================' + dir.upper() + '================')
+                    EnvironmentBuilder.print_release_branch_per_repository(dir)
+
+    @staticmethod
+    def print_release_branch_per_repository(current_release):
+        base_dir = SncConfig().getstring('git_repo','base_dir');
+        list_of_repos = SncConfig().getlist('git_repo', 'repo');
+        for repository in list_of_repos:
+            path_to_repository = base_dir + os.sep + current_release + os.sep + repository
+            if os.path.exists(path_to_repository + os.sep + '.git'):
+                cmd_get_branch = 'cd {0};git rev-parse --abbrev-ref HEAD'.format(path_to_repository)
+                status, current_brunch, error = EnvironmentBuilder.handle_command(cmd_get_branch, False, True)
+                ColorPrint.info('[Release [{0}]: Repository {1} , Branch {2} '.format(current_release, repository, current_brunch))
 
     def create_mid_config(self, port='0'):
         current_port = int(port)
         if not (current_port > 0 and current_port < 65536):
-            current_port = self.instance_port;
+            current_port = self.instance_port
         path_to_work_config = self.path_to_workspace + os.sep + 'mid/mid/work/config.xml'
         path_to_orig_config = self.path_to_workspace + os.sep + 'mid/mid/config.xml'
         path_to_key_store = self.path_to_workspace + os.sep + 'mid/mid/keystore/agent_keystore.jks'
@@ -238,14 +261,14 @@ class EnvironmentBuilder(object):
         self.delete_mysql_db(db_name)
         self.create_mysql_db(db_name)
 
-
     @staticmethod
     def is_release_direcrory(release_dir):
         base_dir = SncConfig().getstring('git_repo','base_dir');
         full_path = base_dir + os.sep + release_dir
-        list_of_dirs =  os.listdir(full_path)
+        list_of_dirs = os.listdir(full_path)
         list_of_repos = SncConfig().getlist('git_repo','repo');
         return not set(list_of_repos).isdisjoint(list_of_dirs)
+
 
 
     def create_mysql_db(self, db_name):
@@ -264,7 +287,6 @@ class EnvironmentBuilder(object):
         glide_properties = self.path_to_workspace + \
                            os.sep + 'glide-launcher/glide-home-dist/conf/overrides.d/glide.properties'
 
-
         if os.path.isfile(glide_db_properties):
             print glide_db_properties
             p = Properties(glide_db_properties)
@@ -275,7 +297,13 @@ class EnvironmentBuilder(object):
             p = Properties(glide_properties)
             print p.get_all_properies()
 
-
+    def print_execution_error_summary(self):
+        if len(self.errors) > 0:
+            ColorPrint.blue_highlight("Fix the following errors and run again")
+            for exec_error in self.errors:
+                ColorPrint.err(exec_error)
+        else:
+            ColorPrint.blue_highlight("Execution complited without errors")
 
     def handle_command(self, cmd, check_rc=True, get_output=False):
         """
@@ -301,12 +329,39 @@ class EnvironmentBuilder(object):
             if p_status != 0:
                 ColorPrint.err("[handle_command] failed executing: {0}".format(cmd))
                 ColorPrint.err(str(err))
+                self.errors.append("Command: [" + cmd + "] Error: [" + str(err)) + "]"
             else:
                 ColorPrint.info("[handle_command] succeeded executing: {0}".format(cmd))
 
         if self.abort_on_error and p_status != 0:
             ColorPrint.err("EnvironmentBuilder: Execution aborted due to error[s]")
             exit(1)
+
+        return p_status, out, err
+
+    @staticmethod
+    def handle_command(cmd, check_rc=True, get_output=False):
+        """
+         Executes command
+        :param cmd: command string to be executed
+        :return: rc, stdout, stderr
+        """
+        stdout_flag = None
+        if get_output:
+            stdout_flag = subprocess.PIPE
+        p = subprocess.Popen(cmd,
+                              stdout=stdout_flag,
+                              stderr=subprocess.STDOUT,
+                              shell=True)
+
+
+        (out, err) = p.communicate()
+        p_status = p.wait()
+
+        if check_rc:
+            if p_status != 0:
+                ColorPrint.err("[handle_command] failed executing: {0}".format(cmd))
+                ColorPrint.err(str(err))
 
         return p_status, out, err
 
@@ -332,6 +387,8 @@ if __name__ == '__main__':
     parser.add_argument('-sw', help='switch all repositories to relevant track \n /envbuilder.py -sw -t trackname -r release', action="store_true")
     parser.add_argument('-t', help='track to switch', nargs='?',dest="track")
     parser.add_argument('-r', help='release name', nargs='?', dest="release")
+    parser.add_argument('-copy', help='Copy local release to the new one. Useful for Intellij developers', action="store_true")
+    parser.add_argument('-nr', help='new release name', nargs='?', dest="new_release")
 
     parser.add_argument('-status', help='Status of the current local branches', action="store_true")
     parser.add_argument('-mvn', help='Run maven install -DskipTests for the specified release', action="store_true")
@@ -350,6 +407,13 @@ if __name__ == '__main__':
     if args.mvn and args.release:
         builder = EnvironmentBuilder(args.release)
         builder.mvn_build()
+        builder.print_execution_error_summary()
+        exit(0)
+
+    if args.copy and args.release and args.new_release:
+        builder = EnvironmentBuilder(args.release)
+        builder.copy_local_env(args.new_release)
+        builder.print_execution_error_summary()
         exit(0)
 
     if args.mid and args.release:
@@ -358,29 +422,33 @@ if __name__ == '__main__':
             builder.create_mid_config(args.port)
         else:
             builder.create_mid_config()
+        builder.print_execution_error_summary()
         exit(0)
 
     if args.sw and args.release and args.track:
         builder = EnvironmentBuilder(args.release)
         EnvironmentBuilder.print_list_avalable_versions()
         builder.switch_track(args.track)
+        builder.print_execution_error_summary()
         exit(0)
 
     if args.pull and args.release:
         builder = EnvironmentBuilder(args.release)
         EnvironmentBuilder.print_list_avalable_versions()
         builder.run_git_pull();
+        builder.print_execution_error_summary()
         exit(0)
 
     if args.zboot and args.release:
         builder = EnvironmentBuilder(args.release)
         builder.hard_zboot(args.release)
+        builder.print_execution_error_summary()
         exit(0)
 
     if args.glide and args.release:
-        print "lior"
         builder = EnvironmentBuilder(args.release)
         builder.configure_instance()
+        builder.print_execution_error_summary()
         exit(0)
 
     if args.username and args.release and args.track:
@@ -391,6 +459,8 @@ if __name__ == '__main__':
         builder.import_projects()
         builder.mvn_build()
         builder.open_ide()
+        builder.print_execution_error_summary()
+        exit(0)
     else:
         parser.print_help()
 
