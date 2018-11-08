@@ -238,12 +238,13 @@ class EnvironmentBuilder(object):
                     brunches_d[current_brunch] += 1
                 else:
                     brunches_d[current_brunch] = 0
-        max_brunch = max(brunches_d.values())
-        for message, branch in list_of_messages.iteritems():
-            if brunches_d[branch] < max_brunch:
-                ColorPrint.err(message)
-            else:
-                ColorPrint.info(message)
+        if brunches_d.values():
+            max_brunch = max(brunches_d.values())
+            for message, branch in list_of_messages.iteritems():
+                if brunches_d[branch] < max_brunch:
+                    ColorPrint.err(message)
+                else:
+                    ColorPrint.info(message)
 
 
     def create_mid_config(self, port='0'):
