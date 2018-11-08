@@ -151,14 +151,14 @@ class EnvironmentBuilder(object):
                 if repo in self.repo_status and self.repo_status[repo]:
                     ColorPrint.blue_highlight('Your repository [{0}] is up-to-date, skipping [git pull]'.format(repo))
                 else:
-                    self.handle_command('cd {0};git pull'.format(repo_path))
+                    self.handle_command('cd {0};git pull origin $(git rev-parse --abbrev-ref HEAD)'.format(repo_path))
             else:
                 self.run_git_stash(repo_path)
                 if self._is_ready_to_pull(repo_path):
                     if repo in self.repo_status and self.repo_status[repo]:
                         ColorPrint.blue_highlight('Your repository [{0}] is up-to-date, skipping [git pull]'.format(repo))
                     else:
-                        self.handle_command('cd {0};git pull'.format(repo_path))
+                        self.handle_command('cd {0};git pull origin $(git rev-parse --abbrev-ref HEAD)'.format(repo_path))
                 self.run_git_unstash(repo_path)
         else:
             ColorPrint.warn( "The repository path [{0}] is not available".format(repo))
@@ -458,7 +458,7 @@ if __name__ == '__main__':
 
     if args.pull and args.release:
         builder = EnvironmentBuilder(args.release)
-        builder.run_git_pull();
+        builder.run_git_pull()
         builder.print_execution_error_summary()
         exit(0)
 
