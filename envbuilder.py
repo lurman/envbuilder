@@ -452,14 +452,12 @@ if __name__ == '__main__':
 
     if args.sw and args.release and args.track:
         builder = EnvironmentBuilder(args.release)
-        EnvironmentBuilder.print_list_avalable_versions()
         builder.switch_track(args.track)
         builder.print_execution_error_summary()
         exit(0)
 
     if args.pull and args.release:
         builder = EnvironmentBuilder(args.release)
-        EnvironmentBuilder.print_list_avalable_versions()
         builder.run_git_pull();
         builder.print_execution_error_summary()
         exit(0)
@@ -478,7 +476,6 @@ if __name__ == '__main__':
 
     if args.username and args.release and args.track:
         builder = EnvironmentBuilder(args.release)
-        EnvironmentBuilder.print_list_avalable_versions()
         builder.clone_env(args.username,args.password)
         builder.switch_track(args.track)
         builder.import_projects()
