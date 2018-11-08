@@ -223,7 +223,8 @@ class EnvironmentBuilder(object):
             if os.path.exists(path_to_repository + os.sep + '.git'):
                 cmd_get_branch = 'cd {0};git rev-parse --abbrev-ref HEAD'.format(path_to_repository)
                 status, current_brunch, error = EnvironmentBuilder.handle_command(cmd_get_branch, False, True)
-                ColorPrint.info('[Release [{0}]: Repository {1} , Branch {2} '.format(current_release, repository, current_brunch))
+                current_brunch = current_brunch.rstrip();
+                ColorPrint.info("Release: [{0}] Repository: [{1}], Branch: [{2}]".rstrip().format(current_release, repository, current_brunch))
 
     def create_mid_config(self, port='0'):
         current_port = int(port)
