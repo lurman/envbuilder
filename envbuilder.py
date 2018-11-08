@@ -205,9 +205,13 @@ class EnvironmentBuilder(object):
                 return False
 
     @staticmethod
-    def print_list_avalable_versions():
+    def print_list_avalable_versions(current_release):
         base_dir = SncConfig().getstring('git_repo','base_dir');
-        ColorPrint.blue_highlight("***** Avalable versions ****:")
+
+        if current_release is not None:
+            ColorPrint.blue_highlight('================' + current_release.upper() + '================')
+            EnvironmentBuilder.print_release_branch_per_repository(current_release)
+            exit(0)
         for dir in os.listdir(base_dir):
             if os.path.isdir(base_dir + os.sep + dir) and not dir.startswith('.'):
                 if EnvironmentBuilder.is_release_direcrory(dir):
@@ -216,15 +220,31 @@ class EnvironmentBuilder(object):
 
     @staticmethod
     def print_release_branch_per_repository(current_release):
+        """git remote prune origin"""
+
         base_dir = SncConfig().getstring('git_repo','base_dir');
         list_of_repos = SncConfig().getlist('git_repo', 'repo');
+        list_of_messages = {}
+        brunches_d = {}
         for repository in list_of_repos:
             path_to_repository = base_dir + os.sep + current_release + os.sep + repository
             if os.path.exists(path_to_repository + os.sep + '.git'):
                 cmd_get_branch = 'cd {0};git rev-parse --abbrev-ref HEAD'.format(path_to_repository)
                 status, current_brunch, error = EnvironmentBuilder.handle_command(cmd_get_branch, False, True)
                 current_brunch = current_brunch.rstrip();
-                ColorPrint.info("Release: [{0}] Repository: [{1}], Branch: [{2}]".rstrip().format(current_release, repository, current_brunch))
+                current_message = "Release: [{0}] Repository: [{1}], Branch: [{2}]".rstrip().format(current_release, repository, current_brunch)
+                list_of_messages[current_message] = current_brunch
+                if current_brunch in brunches_d:
+                    brunches_d[current_brunch] += 1
+                else:
+                    brunches_d[current_brunch] = 0
+        max_brunch = max(brunches_d.values())
+        for message, branch in list_of_messages.iteritems():
+            if brunches_d[branch] < max_brunch:
+                ColorPrint.err(message)
+            else:
+                ColorPrint.info(message)
+
 
     def create_mid_config(self, port='0'):
         current_port = int(port)
@@ -401,8 +421,12 @@ if __name__ == '__main__':
 
     print str(args)
 
+    if args.status and args.release:
+        EnvironmentBuilder.print_list_avalable_versions(args.release)
+        exit(0)
+
     if args.status:
-        EnvironmentBuilder.print_list_avalable_versions()
+        EnvironmentBuilder.print_list_avalable_versions(None)
         exit(0)
 
     if args.mvn and args.release:
