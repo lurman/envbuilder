@@ -1,15 +1,13 @@
 {
   "type" : "single",
-  "name": "Agent Simulator",
-  "flag": "acc_sim",
-  "description":  "Start ACC Simulator",
+  "name": "Plagin Name",
+  "flag": "flag_name",
+  "description":  "The description that will appiear in the help",
   "active": true,
   "notify": true,
   "background": false,
   "commands": [
-    "echo \"Build acc simulator\"",
-    "cd agent-now/agent-simulator;go build",
-    "echo \"Starting 5 agent simulator, connecing to \"ws://127.0.0.1:8800/ws/events\" \"",
-	"ulimit -n 4096;cd agent-now/agent-simulator;./agent-simulator 5 \"ws://127.0.0.1:8800/ws/events\" agent- ./check_results"
+    "echo \"Hellow World\"",
+    "ls -lrt"
   ]
 }
