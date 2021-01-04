@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 
 from ConfigParser import RawConfigParser
 from ConfigParser import NoSectionError
@@ -6,24 +6,25 @@ import os
 from color_print import ColorPrint
 
 ENVBUILDER_CONF = 'envbuilder.conf'
-
+ENVB_PATH = 'ENVB_PATH'
 
 class SncConfig(object):
-
     def __init__(self):
         self.config = RawConfigParser(allow_no_value=False)
         try:
-            if ENVBUILDER_CONF in os.environ:
-                self.config_file_path = os.environ[ENVBUILDER_CONF];
-                if len(str(self.config_file_path).strip()) > 0 and (ENVBUILDER_CONF in self.config_file_path):
+            if ENVB_PATH in os.environ:
+                self.config_file_path = os.environ[ENVB_PATH] + os.sep + ENVBUILDER_CONF;
+                if len(str(self.config_file_path).strip()) > len(ENVBUILDER_CONF):
                     self.config.read(self.config_file_path)
                 else:
                     self.config.read(ENVBUILDER_CONF)
             else:
-                 self.config.read(ENVBUILDER_CONF)
+                self.config.read(ENVBUILDER_CONF)
+                os.environ[ENVB_PATH] = os.getcwd()
         except:
             ColorPrint.err("Config file {0} not found".format(ENVBUILDER_CONF))
             exit(1)
+
 
     def getstring(self, section, param_name):
         try:

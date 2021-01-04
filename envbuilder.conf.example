@@ -1,0 +1,27 @@
+[envbuilder]
+abort_on_error=False
+print_cmd=True
+print_cmd_output=True
+parallel_run=True
+release=paris
+[git_repo]
+commit_since_days=30
+git_url=github.com/lurman
+base_dir=/Users/[your.user]/code
+repo=[list of your repositories]
+[projects]
+repository_name_1:project1,project2
+repository_name_2:project1,project2
+[notification]
+notify=True
+notification_provider=email,telegram
+notification_email_recipient=your.name@domain.com
+#To get your chat ID got to the Telegram Find EnvBuilder
+#Send message to Bot and then go to the below url to get you chat_id
+#https://api.telegram.org/bot996719894:AAE4iUm34oRxEQ5OQ644GIgDZJbh3169tPw/getUpdates
+#Take the number and add it to the parameter
+notification_telegram_chat_id=
+
+
+
+
