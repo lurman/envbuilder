@@ -29,7 +29,7 @@ usage: envbuilder.py [-h] [-clone] [-pull] [-sw] [-t [TRACK]] [-r [RELEASE]]
                      [-mid_thread] [-mid_heap] [-acc_sim] [-run_clotho]
                      [-inst_clotho]
 
-ServiceNow build environment tool
+Build environment tool
 
 optional arguments:
   -h, --help          show this help message and exit
