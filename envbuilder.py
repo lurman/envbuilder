@@ -1,28 +1,20 @@
 #!/usr/bin/env python
 
 import subprocess
-import random
-import webbrowser
-
 from snc_config import SncConfig
 from datetime import datetime, timedelta
 import argparse
 from argparse import RawTextHelpFormatter
 from color_print import ColorPrint
 from plugins import PluginsLoader
-#from plugins import PluginAttribute
 import os
 from multiprocessing import Pool
 import copy_reg
 import types
 from itertools import repeat
 import time
-import xml.etree.ElementTree as ET
-from property_file import Properties
 from functools import partial
-from metric_base import MetricBase
 from notification_manager import NotificationManager
-from glide_plugins import GlidePluginsBase
 
 
 ENVB_PATH = 'ENVB_PATH'
