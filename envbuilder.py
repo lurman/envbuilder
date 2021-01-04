@@ -463,10 +463,8 @@ if __name__ == '__main__':
 # |______|_| |_|\_/ |____/ \__,_|_|_|\__,_|\___|_|     |_(_)|_| 
 #""");
 
-
-
     parser = argparse.ArgumentParser(prog='envbuilder.py',
-                                     description='ServiceNow build environment tool',
+                                     description='Build environment tool',
                                      formatter_class=RawTextHelpFormatter)
     parser.add_argument('-clone', help='Clone defined repositories in the conf file to the specifed release directory', action="store_true")
     parser.add_argument('-pull', help='run git pull for all or specified repositories \n ./envbuilder.py -pull -r release',action="store_true")
